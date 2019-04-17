@@ -7,8 +7,9 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use Namshi\Cuzzle\Formatter\CurlFormatter;
+use PHPUnit\Framework\TestCase;
 
-class RequestTest extends \PHPUnit_Framework_TestCase
+class RequestTest extends TestCase
 {
     /**
      * @var CurlFormatter

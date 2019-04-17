@@ -5,6 +5,7 @@ namespace Namshi\Cuzzle\Formatter;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Cookie\SetCookie;
 use Psr\Http\Message\RequestInterface;
+use Symfony\Component\Process\Process;
 
 /**
  * Class CurlFormatter it formats a Guzzle request to a cURL shell command
@@ -35,7 +36,7 @@ class CurlFormatter
     /**
      * @param int $commandLineLength
      */
-    function __construct($commandLineLength =  100)
+    public function __construct($commandLineLength =  100)
     {
         $this->commandLineLength = $commandLineLength;
     }
@@ -45,7 +46,7 @@ class CurlFormatter
      * @param array            $options
      * @return string
      */
-    public function format(RequestInterface $request, array $options = [])
+    public function format(RequestInterface $request, array $options = []): string
     {
         $this->command           = 'curl';
         $this->currentLineLength = strlen($this->command);
@@ -127,14 +128,14 @@ class CurlFormatter
 
         $contents = $body->getContents();
 
-        if ($body->isSeekable()) {
+        if (isset($previousPosition) && $body->isSeekable()) {
             $body->seek($previousPosition);
         }
 
         if ($contents) {
             // clean input of null bytes
              $contents = str_replace(chr(0), '', $contents);
-            $this->addOption('d', escapeshellarg($contents));
+            $this->addOption('d', $this->escapeShellArgument($contents));
         }
 
         //if get request has data Add G otherwise curl will make a post request
@@ -160,15 +161,16 @@ class CurlFormatter
 
         /** @var SetCookie $cookie */
         foreach ($options['cookies'] as $cookie) {
-            if ($cookie->matchesPath($path) && $cookie->matchesDomain($host) &&
-                ! $cookie->isExpired() && ( ! $cookie->getSecure() || $scheme == 'https')) {
-
+            if ($cookie->matchesPath($path)
+                && $cookie->matchesDomain($host)
+                && ! $cookie->isExpired()
+                && ( ! $cookie->getSecure() || $scheme === 'https')) {
                 $values[] = $cookie->getName() . '=' . $cookie->getValue();
             }
         }
 
         if ($values) {
-            $this->addOption('b', escapeshellarg(implode('; ', $values)));
+            $this->addOption('b', $this->escapeShellArgument(implode('; ', $values)));
         }
     }
 
@@ -183,11 +185,11 @@ class CurlFormatter
             }
 
             if ('user-agent' === strtolower($name)) {
-                $this->addOption('A', escapeshellarg($header[0]));
+                $this->addOption('A', $this->escapeShellArgument($header[0]));
                 continue;
             }
 
-            foreach ((array)$header as $headerValue) {
+            foreach ($header as $headerValue) {
                 $this->addOption('H', escapeshellarg("{$name}: {$headerValue}"));
             }
         }
@@ -229,5 +231,14 @@ class CurlFormatter
     protected function extractUrlArgument(RequestInterface $request)
     {
         $this->addCommandPart(escapeshellarg((string)$request->getUri()->withFragment('')));
+    }
+
+    /**
+     * @param mixed $argument
+     * @return string
+     */
+    protected function escapeShellArgument($argument): string
+    {
+        return (new Process([$argument]))->getCommandLine();
     }
 }

@@ -2,8 +2,9 @@
 
 use Namshi\Cuzzle\Formatter\CurlFormatter;
 use GuzzleHttp\Psr7\Request;
+use function GuzzleHttp\Psr7\stream_for;
 
-class CurlFormatterTest extends \PHPUnit_Framework_TestCase
+class CurlFormatterTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var CurlFormatter
@@ -69,7 +70,7 @@ class CurlFormatterTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals("curl 'http://example.local?foo=bar'", $curl);
 
-        $body = \GuzzleHttp\Psr7\stream_for(http_build_query(['foo' => 'bar', 'hello' => 'world'], '', '&'));
+        $body = stream_for(http_build_query(['foo' => 'bar', 'hello' => 'world'], '', '&'));
 
         $request = new Request('GET', 'http://example.local',[],$body);
         $curl    = $this->curlFormatter->format($request);
@@ -80,7 +81,7 @@ class CurlFormatterTest extends \PHPUnit_Framework_TestCase
 
     public function testPOST()
     {
-        $body = \GuzzleHttp\Psr7\stream_for(http_build_query(['foo' => 'bar', 'hello' => 'world'], '', '&'));
+        $body = stream_for(http_build_query(['foo' => 'bar', 'hello' => 'world'], '', '&'));
 
         $request = new Request('POST', 'http://example.local', [], $body);
         $curl    = $this->curlFormatter->format($request);
@@ -115,7 +116,7 @@ class CurlFormatterTest extends \PHPUnit_Framework_TestCase
 
     public function testPUT()
     {
-        $request = new Request('PUT', 'http://example.local', [], \GuzzleHttp\Psr7\stream_for('foo=bar&hello=world'));
+        $request = new Request('PUT', 'http://example.local', [], stream_for('foo=bar&hello=world'));
         $curl    = $this->curlFormatter->format($request);
 
         $this->assertContains("-d 'foo=bar&hello=world'", $curl);
@@ -124,7 +125,7 @@ class CurlFormatterTest extends \PHPUnit_Framework_TestCase
 
     public function testProperBodyReading()
     {
-        $request = new Request('PUT', 'http://example.local', [], \GuzzleHttp\Psr7\stream_for('foo=bar&hello=world'));
+        $request = new Request('PUT', 'http://example.local', [], stream_for('foo=bar&hello=world'));
         $request->getBody()->getContents();
 
         $curl    = $this->curlFormatter->format($request);
@@ -140,7 +141,7 @@ class CurlFormatterTest extends \PHPUnit_Framework_TestCase
     {
         // clean input of null bytes
         $body = str_replace(chr(0), '', $body);
-        $request = new Request('POST', 'http://example.local', $headers, \GuzzleHttp\Psr7\stream_for($body));
+        $request = new Request('POST', 'http://example.local', $headers, stream_for($body));
 
         $curl = $this->curlFormatter->format($request);
 
@@ -160,5 +161,15 @@ class CurlFormatterTest extends \PHPUnit_Framework_TestCase
                 chr(0). 'foo=bar&hello=world',
             ],
         ];
+    }
+
+    public function testLongArgument()
+    {
+        ini_set('memory_limit', -1);
+        $body  = str_repeat('A', 1024*1024*64);
+        $request = new Request('POST', 'http://example.local', [], stream_for($body));
+        $curl = $this->curlFormatter->format($request);
+
+        $this->assertTrue(true);
     }
 }
