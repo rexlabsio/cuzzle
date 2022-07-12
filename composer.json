@@ -4,7 +4,7 @@
     "require": {
         "php": ">=7.0",
         "psr/log": "^1.0",
-        "guzzlehttp/guzzle": "^6.3",
+        "guzzlehttp/guzzle": "^6.3 || ^7.0",
         "symfony/process": "^4.2"
     },
     "require-dev": {
