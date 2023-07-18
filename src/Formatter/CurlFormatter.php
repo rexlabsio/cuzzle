@@ -5,7 +5,6 @@ namespace Namshi\Cuzzle\Formatter;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Cookie\SetCookie;
 use Psr\Http\Message\RequestInterface;
-use Symfony\Component\Process\Process;
 
 /**
  * Class CurlFormatter it formats a Guzzle request to a cURL shell command
@@ -234,11 +233,28 @@ class CurlFormatter
     }
 
     /**
-     * @param mixed $argument
+     * @param string|null $argument
      * @return string
      */
-    protected function escapeShellArgument($argument): string
+    protected function escapeShellArgument(?string $argument): string
     {
-        return (new Process([$argument]))->getCommandLine();
+        if ('' === $argument || null === $argument) {
+            return '""';
+        }
+        if ('\\' !== \DIRECTORY_SEPARATOR) {
+            return "'" . str_replace("'", "'\\''", $argument) . "'";
+        }
+        if (strpos($argument, "\0") !== false) {
+            $argument = str_replace("\0", '?', $argument);
+        }
+        if (!preg_match('/[\/()%!^"<>&|\s]/', $argument)) {
+            return $argument;
+        }
+        if (is_string($argument)) {
+            //this statement is wrapped in an if block just to silence a warning
+            $argument = preg_replace('/(\\\\+)$/', '$1$1', $argument);
+        }
+
+        return '"'.str_replace(['"', '^', '%', '!', "\n"], ['""', '"^^"', '"^%"', '"^!"', '!LF!'], $argument).'"';
     }
 }
