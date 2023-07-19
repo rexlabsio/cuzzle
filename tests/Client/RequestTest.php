@@ -1,22 +1,19 @@
 <?php
 
-namespace Client;
+namespace Tests\Client;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use Namshi\Cuzzle\Formatter\CurlFormatter;
 use PHPUnit\Framework\TestCase;
 
 class RequestTest extends TestCase
 {
-    /**
-     * @var CurlFormatter
-     */
-    protected $curlFormatter;
+    protected Client $client;
+    protected CurlFormatter $curlFormatter;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->client        = new Client();
         $this->curlFormatter = new CurlFormatter();
@@ -28,25 +25,25 @@ class RequestTest extends TestCase
         $jar = CookieJar::fromArray(['Foo' => 'Bar', 'identity' => 'xyz'], 'local.example');
         $curl    = $this->curlFormatter->format($request, ['cookies' => $jar]);
 
-        $this->assertNotContains("-H 'Host: local.example'", $curl);
-        $this->assertContains("-b 'Foo=Bar; identity=xyz'", $curl);
+        $this->assertStringNotContainsString("-H 'Host: local.example'", $curl);
+        $this->assertStringContainsString("-b 'Foo=Bar; identity=xyz'", $curl);
     }
 
     public function testPOST()
     {
-        $request = new Request('POST', 'http://local.example', [], Psr7\Utils::streamFor('foo=bar&hello=world'));
+        $request = new Request('POST', 'http://local.example', [], 'foo=bar&hello=world');
         $curl    = $this->curlFormatter->format($request);
 
-        $this->assertContains("-d 'foo=bar&hello=world'", $curl);
+        $this->assertStringContainsString("-d 'foo=bar&hello=world'", $curl);
     }
 
     public function testPUT()
     {
-        $request = new Request('PUT', 'http://local.example', [], Psr7\Utils::streamFor('foo=bar&hello=world'));
+        $request = new Request('PUT', 'http://local.example', [], 'foo=bar&hello=world');
         $curl    = $this->curlFormatter->format($request);
 
-        $this->assertContains("-d 'foo=bar&hello=world'", $curl);
-        $this->assertContains('-X PUT', $curl);
+        $this->assertStringContainsString("-d 'foo=bar&hello=world'", $curl);
+        $this->assertStringContainsString('-X PUT', $curl);
     }
 
     public function testDELETE()
@@ -54,7 +51,7 @@ class RequestTest extends TestCase
         $request = new Request('DELETE', 'http://local.example');
         $curl    = $this->curlFormatter->format($request);
 
-        $this->assertContains('-X DELETE', $curl);
+        $this->assertStringContainsString('-X DELETE', $curl);
     }
 
     public function testHEAD()
@@ -62,7 +59,7 @@ class RequestTest extends TestCase
         $request = new Request('HEAD', 'http://local.example');
         $curl    = $this->curlFormatter->format($request);
 
-        $this->assertContains("curl 'http://local.example' --head", $curl);
+        $this->assertStringContainsString("curl 'http://local.example' --head", $curl);
     }
 
     public function testOPTIONS()
@@ -70,7 +67,7 @@ class RequestTest extends TestCase
         $request = new Request('OPTIONS', 'http://local.example');
         $curl    = $this->curlFormatter->format($request);
 
-        $this->assertContains('-X OPTIONS', $curl);
+        $this->assertStringContainsString('-X OPTIONS', $curl);
     }
 
-} 
+}

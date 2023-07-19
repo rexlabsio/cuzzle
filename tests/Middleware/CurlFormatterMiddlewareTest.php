@@ -1,12 +1,14 @@
 <?php
 
+namespace Tests\Middleware;
+
 use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Handler\MockHandler;
 use Namshi\Cuzzle\Middleware\CurlFormatterMiddleware;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\Test\TestLogger;
+use Tests\Support\TestLogger;
 
 class CurlFormatterMiddlewareTest extends TestCase
 {
@@ -21,6 +23,6 @@ class CurlFormatterMiddlewareTest extends TestCase
 
         $client->get('http://google.com');
 
-        $this->assertTrue($logger->hasDebugThatContains('curl'));
+        $this->assertTrue($logger->hasRecordThatContains('curl', 'debug'));
     }
 }
