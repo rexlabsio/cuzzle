@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.2.0
+* Add support for PHP 8.4, 8.5
+
 ## 3.0.0
 
 * Remove dependency on symfony/process component
